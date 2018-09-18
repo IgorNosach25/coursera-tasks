@@ -1,24 +1,23 @@
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class BruteCollinearPoints {
 
     private final Point[] points;
-    private final LineSegment[] segments;
-    private final Point foundedPoints[][];
+    private final List<LineSegment> segments;
+    private final Point[][] foundedPoints;
     private int numberOfSegments = 0;
 
     public BruteCollinearPoints(Point[] points) {
-        if (points == null) throw new IllegalArgumentException ("Argument is null");
-        this.points = points;
-        segments = new LineSegment[points.length];
-        foundedPoints = new Point[points.length][points.length];
-        Arrays.sort(points);
-
+        if (points == null) throw new IllegalArgumentException("Argument is null");
+        this.points = Arrays.copyOf(points, points.length);
+        if (checkCorrectnessOfPoints()) throw new IllegalArgumentException("Array contains repeated point!");
+        this.segments = new ArrayList<>();
+        this.foundedPoints = new Point[points.length][points.length];
         for (int i = 0; i < points.length; i++) {
-            foundedPoints[i][0] = points[i];
+            this.foundedPoints[i][0] = points[i];
         }
-
-        if (containsRepeatedPoint()) throw new IllegalArgumentException("Array contains repeated point!");
         findAllSegments();
     }
 
@@ -27,7 +26,8 @@ public class BruteCollinearPoints {
     }
 
     public LineSegment[] segments() {
-        return segments;
+        LineSegment[] lineSegment = new LineSegment[segments.size()];
+        return segments.toArray(lineSegment);
     }
 
     private void findAllSegments() {
@@ -43,7 +43,8 @@ public class BruteCollinearPoints {
                             Point first = getFirstPoint(points[i], points[j], points[k], points[c]);
                             Point last = getLastPoint(points[i], points[j], points[k], points[c]);
                             if (!arePointsFoundAlready(first, last)) {
-                                this.segments[numberOfSegments++] = new LineSegment(first, last);
+                                this.segments.add(new LineSegment(first, last));
+                                this.numberOfSegments++;
                                 this.savePoints(first, last);
                             }
                         }
@@ -59,9 +60,11 @@ public class BruteCollinearPoints {
 
     private boolean arePointsFoundAlready(Point first, Point last) {
         for (Point[] foundedPoint : foundedPoints) {
-            if (foundedPoint[0] == first)
+            if (foundedPoint[0] == first) {
                 for (int j = 1; j < foundedPoint.length; j++) {
-                    if (foundedPoint[j] == last) return true;}
+                    if (foundedPoint[j] == last) return true;
+                }
+            }
         }
         return false;
     }
@@ -101,11 +104,14 @@ public class BruteCollinearPoints {
         return first;
     }
 
-    private boolean containsRepeatedPoint() {
+    private boolean checkCorrectnessOfPoints() {
         for (int i = 0; i < points.length; i++) {
             for (int j = 0; j < points.length; j++) {
-                if (i != j && points[i].compareTo(points[j]) == 0) {
-                    return true;
+                if (i != j) {
+                    if (points[j] == null) throw new IllegalArgumentException();
+                    else if (points[i].compareTo(points[j]) == 0) {
+                        throw new IllegalArgumentException();
+                    }
                 }
             }
         }
@@ -113,10 +119,7 @@ public class BruteCollinearPoints {
     }
 
     private boolean pointsSloped(Point a, Point b, Point c, Point d) {
-        double v1 = a.slopeTo(b);
-        double v2 = b.slopeTo(c);
-        double v3 = c.slopeTo(d);
-        double v4 = d.slopeTo(a);
-        return v1 == v2 && v2 == v3 && v3 == v4;
+        return Double.compare(a.slopeTo(b), b.slopeTo(c)) == 0
+                && Double.compare(b.slopeTo(c), c.slopeTo(d)) == 0;
     }
 }

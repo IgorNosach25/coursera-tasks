@@ -50,10 +50,11 @@ public class Point implements Comparable<Point> {
      * @return the slope between this point and the specified point
      */
     public double slopeTo(Point that) {
-        if (that.y == this.y && that.x == this.x) return Double.NEGATIVE_INFINITY;
-        if (that.x == this.x) return 0.0;
-        if (that.y == this.y) return Double.POSITIVE_INFINITY;
-        return (double) (that.y - this.y) / (that.x - this.x);
+        if (that.x == this.x) {
+            if (that.y == this.y) return Double.NEGATIVE_INFINITY;
+            else return Double.POSITIVE_INFINITY;
+        } else if (that.y == this.y) return 0.0;
+        else return (double) (that.y - this.y) / (that.x - this.x);
     }
 
     /**
@@ -70,9 +71,10 @@ public class Point implements Comparable<Point> {
      */
     @Override
     public int compareTo(Point that) {
-        if (that.y == this.y && that.x == this.x) return 0;
-        else if (this.y < that.y || (that.y == this.y && that.x < this.x)) return 1;
-        else return -1;
+        if (that == null) throw new NullPointerException();
+        if (this.y == that.y && this.x == that.x) return 0;
+        else if (this.y < that.y || (this.y == that.y && this.x < that.x)) return -1;
+        else return 1;
     }
 
     /**
@@ -82,12 +84,10 @@ public class Point implements Comparable<Point> {
      * @return the Comparator that defines this ordering on points
      */
     public Comparator<Point> slopeOrder() {
-
         return (Point a, Point b) -> {
-            if (slopeTo(a) == slopeTo(b)) {
-                return a.compareTo(b);
-            } else if (slopeTo(a) > slopeTo(b)) return 1;
-            else return -1;
+            double slope1 = slopeTo(a);
+            double slope2 = slopeTo(b);
+            return Double.compare(slope1, slope2);
         };
     }
 
@@ -104,11 +104,9 @@ public class Point implements Comparable<Point> {
         return "(" + x + ", " + y + ")";
     }
 
-    /**
-     * Unit tests the Point data type.
-     */
     public static void main(String[] args) {
-
+        Point p = new Point(279, 8);
+        Point q = new Point(279, 339);
+        assert p.slopeTo(q) == Double.POSITIVE_INFINITY;
     }
-
 }

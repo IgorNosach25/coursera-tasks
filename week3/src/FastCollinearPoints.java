@@ -1,33 +1,27 @@
+
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class FastCollinearPoints {
 
     private final Point[] points;
-    private Point[] copyPoints;
-    private LineSegment[] segments;
-    private final Point foundedPoints[][];
+    private final Point[] copyPoints;
+    private final List<LineSegment> segments;
+    private final Point[][] foundedPoints;
     private int numberOfSegments = 0;
 
-    public FastCollinearPoints(Point[] points) {
+    public FastCollinearPoints(final Point[] points) {
         if (points == null) throw new IllegalArgumentException("Argument is null");
-        this.points = points;
-        copyPoints = new Point[points.length];
-        segments = new LineSegment[points.length];
-        foundedPoints = new Point[points.length][points.length];
+        this.points = Arrays.copyOf(points, points.length);
+        checkCorrectnessOfPoints();
+        this.copyPoints = new Point[points.length];
+        this.segments = new ArrayList<>();
+        this.foundedPoints = new Point[points.length][points.length];
         for (int i = 0; i < points.length; i++) {
             foundedPoints[i][0] = points[i];
         }
-
-        if (containsRepeatedPoint()) throw new IllegalArgumentException("Array contains repeated point!");
         findAllSegments();
-        LineSegment[] lineSegments = new LineSegment[numberOfSegments];
-
-        for (int i = 0; i < segments.length; i++) {
-            if (segments[i] != null) {
-                lineSegments[i] = segments[i];
-            }
-        }
-        this.segments = lineSegments;
     }
 
     public int numberOfSegments() {
@@ -35,9 +29,8 @@ public class FastCollinearPoints {
     }
 
     public LineSegment[] segments() {
-        LineSegment[] temp = new LineSegment[numberOfSegments];
-        System.arraycopy(segments, 0, temp, 0, numberOfSegments);
-        return temp;
+        LineSegment[] lineSegment = new LineSegment[segments.size()];
+        return segments.toArray(lineSegment);
     }
 
     private void findAllSegments() {
@@ -51,17 +44,26 @@ public class FastCollinearPoints {
                     int index = binarySearchBySlope(slope, point);
                     int firstPointInOrderSet = findFirstPointInPointSet(index, point, slope);
                     int lastPointInOrderSet = findLastPointInPointSet(firstPointInOrderSet, point, slope);
-                    Point firstPoint = getFirstPoint(point, copyPoints[lastPointInOrderSet], copyPoints[firstPointInOrderSet]);
-                    Point lastPoint = getLastPoint(point, copyPoints[lastPointInOrderSet], copyPoints[firstPointInOrderSet]);
+                    Point firstPoint = getFirstPoint(firstPointInOrderSet, lastPointInOrderSet, point);
+                    Point lastPoint = getLastPoint(firstPointInOrderSet, lastPointInOrderSet, point);
                     if (!arePointsFoundAlready(firstPoint, lastPoint) && lastPointInOrderSet - firstPointInOrderSet >= 2) {
                         savePoints(firstPoint, lastPoint);
-                        segments[numberOfSegments++] = new LineSegment(firstPoint, lastPoint);
+                        segments.add(new LineSegment(firstPoint, lastPoint));
+                        numberOfSegments++;
                     }
                 }
             }
 
         }
 
+    }
+
+    private int findFirstPointInPointSet(int pos, Point point, double slope) {
+        int first = pos;
+        while (first > 1 && Double.compare(copyPoints[first - 1].slopeTo(point), slope) == 0) {
+            first--;
+        }
+        return first;
     }
 
     private int findLastPointInPointSet(int pos, Point point, double slope) {
@@ -72,7 +74,7 @@ public class FastCollinearPoints {
         while (lo <= hi) {
             mid = (lo + hi) >>> 1;
             double localSlope = copyPoints[mid].slopeTo(point);
-            if (localSlope != slope) {
+            if (Double.compare(localSlope, slope) != 0) {
                 hi = mid - 1;
             } else {
                 lastPos = mid;
@@ -81,25 +83,6 @@ public class FastCollinearPoints {
 
         }
         return lastPos;
-    }
-
-    private int findFirstPointInPointSet(int pos, Point point, double slope) {
-        int hi = copyPoints.length - 1;
-        int lo = 1;
-        int mid;
-        int first = pos;
-        while (lo <= hi) {
-            mid = (lo + hi) >>> 1;
-            double localSlope = copyPoints[mid].slopeTo(point);
-            if (localSlope == slope) {
-                first = mid;
-                hi = mid - 1;
-            } else {
-                lo = mid + 1;
-            }
-
-        }
-        return first;
     }
 
     private int binarySearchBySlope(double slope, Point point) {
@@ -142,37 +125,41 @@ public class FastCollinearPoints {
         }
     }
 
-    private Point getLastPoint(Point... localPoints) {
-        Point last = localPoints[0];
-        for (int i = 1; i < localPoints.length; i++) {
-            if (localPoints[i].compareTo(last) > 0) {
-                last = localPoints[i];
-            }
-        }
-        if (last == null) throw new RuntimeException();
-        return last;
-    }
-
-    private Point getFirstPoint(Point... localPoints) {
-        Point first = localPoints[0];
-        for (int i = 1; i < localPoints.length; i++) {
-            if (localPoints[i].compareTo(first) < 0) {
-                first = localPoints[i];
+    private Point getFirstPoint(int from, int to, Point point) {
+        Point first = point;
+        for (int i = from; i <= to; i++) {
+            if (copyPoints[i].compareTo(first) < 0) {
+                first = copyPoints[i];
             }
         }
         if (first == null) throw new RuntimeException();
         return first;
     }
 
-    private boolean containsRepeatedPoint() {
+    private Point getLastPoint(int from, int to, Point point) {
+        Point last = point;
+        for (int i = from; i <= to; i++) {
+            if (copyPoints[i].compareTo(last) > 0) {
+                last = copyPoints[i];
+            }
+        }
+        if (last == null) throw new RuntimeException();
+        return last;
+    }
+
+
+
+    private boolean checkCorrectnessOfPoints() {
         for (int i = 0; i < points.length; i++) {
             for (int j = 0; j < points.length; j++) {
-                if (i != j && points[i].compareTo(points[j]) == 0) {
-                    return true;
+                if (i != j) {
+                    if (points[j] == null) throw new IllegalArgumentException();
+                    else if (points[i].compareTo(points[j]) == 0) {
+                        throw new IllegalArgumentException();
+                    }
                 }
             }
         }
         return false;
     }
-
 }
