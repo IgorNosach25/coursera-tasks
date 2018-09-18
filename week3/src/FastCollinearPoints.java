@@ -14,13 +14,12 @@ public class FastCollinearPoints {
     public FastCollinearPoints(final Point[] points) {
         if (points == null) throw new IllegalArgumentException("Argument is null");
         this.points = Arrays.copyOf(points, points.length);
+        Arrays.sort(this.points);
         checkCorrectnessOfPoints();
         this.copyPoints = new Point[points.length];
         this.segments = new ArrayList<>();
         this.foundedPoints = new Point[points.length][points.length];
-        for (int i = 0; i < points.length; i++) {
-            foundedPoints[i][0] = points[i];
-        }
+        initPointStorage();
         findAllSegments();
     }
 
@@ -59,9 +58,20 @@ public class FastCollinearPoints {
     }
 
     private int findFirstPointInPointSet(int pos, Point point, double slope) {
+        int hi = pos;
+        int lo = 1;
+        int mid;
         int first = pos;
-        while (first > 1 && Double.compare(copyPoints[first - 1].slopeTo(point), slope) == 0) {
-            first--;
+        while (lo <= hi) {
+            mid = (lo + hi) >>> 1;
+            double localSlope = copyPoints[mid].slopeTo(point);
+            if (Double.compare(localSlope, slope) == 0) {
+                first = mid;
+                hi = mid - 1;
+            } else {
+                lo = mid + 1;
+            }
+
         }
         return first;
     }
@@ -148,18 +158,19 @@ public class FastCollinearPoints {
     }
 
 
-
     private boolean checkCorrectnessOfPoints() {
-        for (int i = 0; i < points.length; i++) {
-            for (int j = 0; j < points.length; j++) {
-                if (i != j) {
-                    if (points[j] == null) throw new IllegalArgumentException();
-                    else if (points[i].compareTo(points[j]) == 0) {
-                        throw new IllegalArgumentException();
-                    }
-                }
-            }
+        Point previous = points[1];
+        for (Point point : points) {
+            if (point == null) throw new IllegalArgumentException();
+            if (previous.compareTo(point) == 0) throw new IllegalArgumentException();
+            previous = point;
         }
         return false;
+    }
+
+    private void initPointStorage() {
+        for (int i = 0; i < points.length; i++) {
+            foundedPoints[i][0] = points[i];
+        }
     }
 }
