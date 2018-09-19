@@ -1,4 +1,3 @@
-package collinear_points;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,12 +13,11 @@ public class BruteCollinearPoints {
     public BruteCollinearPoints(Point[] points) {
         if (points == null) throw new IllegalArgumentException("Argument is null");
         this.points = Arrays.copyOf(points, points.length);
-        if (checkCorrectnessOfPoints()) throw new IllegalArgumentException("Array contains repeated point!");
+        Arrays.sort(this.points);
+        checkPointsCorrectness();
         this.segments = new ArrayList<>();
         this.foundedPoints = new Point[points.length][points.length];
-        for (int i = 0; i < points.length; i++) {
-            this.foundedPoints[i][0] = points[i];
-        }
+        initPointsStorage();
         findAllSegments();
     }
 
@@ -46,8 +44,8 @@ public class BruteCollinearPoints {
                             Point last = getLastPoint(points[i], points[j], points[k], points[c]);
                             if (!arePointsFoundAlready(first, last)) {
                                 this.segments.add(new LineSegment(first, last));
-                                this.numberOfSegments++;
                                 this.savePoints(first, last);
+                                this.numberOfSegments++;
                             }
                         }
                     }
@@ -58,6 +56,12 @@ public class BruteCollinearPoints {
 
         }
 
+    }
+
+    private void initPointsStorage() {
+        for (int i = 0; i < points.length; i++) {
+            this.foundedPoints[i][0] = points[i];
+        }
     }
 
     private boolean arePointsFoundAlready(Point first, Point last) {
@@ -91,7 +95,7 @@ public class BruteCollinearPoints {
                 last = localPoints[i];
             }
         }
-        if (last == null) throw new RuntimeException();
+        if (last == null) throw new NullPointerException();
         return last;
     }
 
@@ -102,22 +106,17 @@ public class BruteCollinearPoints {
                 first = localPoints[i];
             }
         }
-        if (first == null) throw new RuntimeException();
+        if (first == null) throw new NullPointerException();
         return first;
     }
 
-    private boolean checkCorrectnessOfPoints() {
-        for (int i = 0; i < points.length; i++) {
-            for (int j = 0; j < points.length; j++) {
-                if (i != j) {
-                    if (points[j] == null) throw new IllegalArgumentException();
-                    else if (points[i].compareTo(points[j]) == 0) {
-                        throw new IllegalArgumentException();
-                    }
-                }
-            }
+    private void checkPointsCorrectness() {
+        Point previous = points[1];
+        for (Point point : points) {
+            if (point == null) throw new IllegalArgumentException();
+            if (previous.compareTo(point) == 0) throw new IllegalArgumentException();
+            previous = point;
         }
-        return false;
     }
 
     private boolean pointsSloped(Point a, Point b, Point c, Point d) {

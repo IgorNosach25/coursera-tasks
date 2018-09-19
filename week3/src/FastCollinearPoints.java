@@ -1,4 +1,3 @@
-package collinear_points;
 
 import javafx.util.Pair;
 
@@ -18,7 +17,7 @@ public class FastCollinearPoints {
         if (points == null) throw new IllegalArgumentException("Argument is null");
         this.points = Arrays.copyOf(points, points.length);
         Arrays.sort(this.points);
-        checkCorrectnessOfPoints();
+        checkPointsCorrectness();
         this.copyPoints = new Point[points.length];
         this.segments = new ArrayList<>();
         this.foundedPoints = new ArrayList<>();
@@ -42,8 +41,8 @@ public class FastCollinearPoints {
             for (int q = 0; q < points.length; q++) {
                 if (q != p) {
                     double slope = point.slopeTo(points[q]);
-                    int index = binarySearchBySlope(slope, point);
-                    int firstPointIndexInOrderSet = findFirstPointIndexInPointSet(index, point, slope);
+                    int randomPointIndex = binarySearchBySlope(slope, point);
+                    int firstPointIndexInOrderSet = findFirstPointIndexInPointSet(randomPointIndex, point, slope);
                     int lastPointIndexInOrderSet = findLastPointInPointSet(firstPointIndexInOrderSet, point, slope);
                     Arrays.sort(copyPoints, firstPointIndexInOrderSet, lastPointIndexInOrderSet);
                     Point smallestPoint = copyPoints[firstPointIndexInOrderSet].compareTo(point) < 0
@@ -128,7 +127,7 @@ public class FastCollinearPoints {
         foundedPoints.add(new Pair<>(first, last));
     }
 
-    private void checkCorrectnessOfPoints() {
+    private void checkPointsCorrectness() {
         Point previous = points[1];
         for (Point point : points) {
             if (point == null) throw new IllegalArgumentException();
