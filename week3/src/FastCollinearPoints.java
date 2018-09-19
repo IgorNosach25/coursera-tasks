@@ -1,4 +1,6 @@
 
+import javafx.util.Pair;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -8,7 +10,7 @@ public class FastCollinearPoints {
     private final Point[] points;
     private final Point[] copyPoints;
     private final List<LineSegment> segments;
-    private final Point[][] foundedPoints;
+    private final List<Pair<Point, Point>> foundedPoints;
     private int numberOfSegments = 0;
 
     public FastCollinearPoints(final Point[] points) {
@@ -18,8 +20,7 @@ public class FastCollinearPoints {
         checkCorrectnessOfPoints();
         this.copyPoints = new Point[points.length];
         this.segments = new ArrayList<>();
-        this.foundedPoints = new Point[points.length][points.length];
-        initPointStorage();
+        this.foundedPoints = new ArrayList<>();
         findAllSegments();
     }
 
@@ -41,13 +42,16 @@ public class FastCollinearPoints {
                 if (q != p) {
                     double slope = point.slopeTo(points[q]);
                     int index = binarySearchBySlope(slope, point);
-                    int firstPointInOrderSet = findFirstPointInPointSet(index, point, slope);
-                    int lastPointInOrderSet = findLastPointInPointSet(firstPointInOrderSet, point, slope);
-                    Point firstPoint = getFirstPoint(firstPointInOrderSet, lastPointInOrderSet, point);
-                    Point lastPoint = getLastPoint(firstPointInOrderSet, lastPointInOrderSet, point);
-                    if (!arePointsFoundAlready(firstPoint, lastPoint) && lastPointInOrderSet - firstPointInOrderSet >= 2) {
-                        savePoints(firstPoint, lastPoint);
-                        segments.add(new LineSegment(firstPoint, lastPoint));
+                    int firstPointIndexInOrderSet = findFirstPointIndexInPointSet(index, point, slope);
+                    int lastPointIndexInOrderSet = findLastPointInPointSet(firstPointIndexInOrderSet, point, slope);
+                    Arrays.sort(copyPoints, firstPointIndexInOrderSet, lastPointIndexInOrderSet);
+                    Point smallestPoint = copyPoints[firstPointIndexInOrderSet].compareTo(point) < 0
+                            ? copyPoints[firstPointIndexInOrderSet] : point;
+                    Point biggestPoint = copyPoints[lastPointIndexInOrderSet].compareTo(point) > 0
+                            ? copyPoints[lastPointIndexInOrderSet] : point;
+                    if (!arePointsFoundAlready(smallestPoint, biggestPoint) && lastPointIndexInOrderSet - firstPointIndexInOrderSet >= 2) {
+                        savePoints(smallestPoint, biggestPoint);
+                        segments.add(new LineSegment(smallestPoint, biggestPoint));
                         numberOfSegments++;
                     }
                 }
@@ -57,7 +61,7 @@ public class FastCollinearPoints {
 
     }
 
-    private int findFirstPointInPointSet(int pos, Point point, double slope) {
+    private int findFirstPointIndexInPointSet(int pos, Point point, double slope) {
         int hi = pos;
         int lo = 1;
         int mid;
@@ -113,64 +117,22 @@ public class FastCollinearPoints {
     }
 
     private boolean arePointsFoundAlready(Point first, Point last) {
-        for (Point[] foundedPoint : foundedPoints) {
-            if (foundedPoint[0] == first)
-                for (int j = 1; j < foundedPoint.length; j++) {
-                    if (foundedPoint[j] == last) return true;
-                }
+        for (Pair<Point, Point> points : foundedPoints) {
+            if (points.getKey() == first && points.getValue() == last) return true;
         }
         return false;
     }
 
     private void savePoints(Point first, Point last) {
-        for (int i = 0; i < foundedPoints.length; i++) {
-            if (foundedPoints[i][0] == first) {
-                for (int j = 1; j < foundedPoints[i].length; j++) {
-                    if (foundedPoints[i][j] == null) {
-                        foundedPoints[i][j] = last;
-                        break;
-                    }
-                }
-            }
-        }
+        foundedPoints.add(new Pair<>(first, last));
     }
 
-    private Point getFirstPoint(int from, int to, Point point) {
-        Point first = point;
-        for (int i = from; i <= to; i++) {
-            if (copyPoints[i].compareTo(first) < 0) {
-                first = copyPoints[i];
-            }
-        }
-        if (first == null) throw new RuntimeException();
-        return first;
-    }
-
-    private Point getLastPoint(int from, int to, Point point) {
-        Point last = point;
-        for (int i = from; i <= to; i++) {
-            if (copyPoints[i].compareTo(last) > 0) {
-                last = copyPoints[i];
-            }
-        }
-        if (last == null) throw new RuntimeException();
-        return last;
-    }
-
-
-    private boolean checkCorrectnessOfPoints() {
+    private void checkCorrectnessOfPoints() {
         Point previous = points[1];
         for (Point point : points) {
             if (point == null) throw new IllegalArgumentException();
             if (previous.compareTo(point) == 0) throw new IllegalArgumentException();
             previous = point;
-        }
-        return false;
-    }
-
-    private void initPointStorage() {
-        for (int i = 0; i < points.length; i++) {
-            foundedPoints[i][0] = points[i];
         }
     }
 }
