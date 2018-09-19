@@ -1,3 +1,5 @@
+package collinear_points;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

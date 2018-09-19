@@ -1,3 +1,4 @@
+package collinear_points;
 
 import javafx.util.Pair;
 

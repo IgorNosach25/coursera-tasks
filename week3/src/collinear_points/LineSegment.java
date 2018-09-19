@@ -1,3 +1,5 @@
+package collinear_points;
+
 public class LineSegment {
     private final Point p;   // one endpoint of this line segment
     private final Point q;   // the other endpoint of this line segment
